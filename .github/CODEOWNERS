@@ -1,0 +1,23 @@
+# CODEOWNERS: "every gate has a named owner".
+# GitHub requests a review from the owner when a PR touches their files.
+# Later lines win over earlier ones. Replace the usernames with your team's (scripts/init.sh does this).
+#
+# To make owner approval REQUIRED: Settings → Branches → add a rule for main →
+# "Require a pull request before merging" → "Require review from Code Owners".
+# Only turn that on for teams: on a solo project you can't approve your own PR.
+
+# Default: build lead (owns CLAUDE.md, branch strategy and merge order)
+*                       @Pra-nav-G
+
+# Spec owner: marketing-doc.md and the story list; approves scope changes
+/marketing-doc.md       @Pra-nav-G
+/build-plan.md          @Pra-nav-G
+/design-plan.md         @Pra-nav-G
+
+# System owner: tokens and components; no one else edits them mid-build
+/design-system/         @Pra-nav-G
+
+# Build lead: steering files and CI
+/CLAUDE.md              @Pra-nav-G
+/.claude/               @Pra-nav-G
+/.github/               @Pra-nav-G

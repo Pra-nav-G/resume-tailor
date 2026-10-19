@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Always runs, even before the project has code: fail if a .env file was committed
+      - name: Block committed env files
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+            echo "A .env file is tracked. Remove it and rotate any secrets."
+            exit 1
+          fi
+
+      # Always runs: no hard-coded colours or pixel sizes in src/, app/, components/, pages/ (passes until app code exists)
+      - name: Design-system tokens only
+        run: bash scripts/check-design-tokens.sh
+
+      # The plugin ships subagents from agents/; they must match .claude/agents/ exactly
+      - name: Plugin agents match .claude/agents
+        run: |
+          if [ -d agents ]; then
+            diff -r .claude/agents agents || {
+              echo "agents/ is out of sync. Edit .claude/agents/, then run: cp .claude/agents/*.md agents/"
+              exit 1
+            }
+          fi
+
+      # The Node steps run only once the project has a package.json.
+      # Until then (a fresh copy of this template) CI passes on the checks above.
+      - uses: actions/setup-node@v5
+        if: hashFiles('package.json') != ''
+        with:
+          node-version: 22
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+
+      - name: Install
+        if: hashFiles('package.json') != ''
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Lint
+        if: hashFiles('package.json') != ''
+        run: npm run lint --if-present
+
+      - name: Test
+        if: hashFiles('package.json') != ''
+        run: npm test --if-present
+
+      # End-to-end tests for critical paths, if the project defines them (e.g. Playwright)
+      - name: End-to-end tests
+        if: hashFiles('package.json') != ''
+        run: npm run test:e2e --if-present
+
+      - name: Build
+        if: hashFiles('package.json') != ''
+        run: npm run build --if-present
+
+      # Fails on high or critical vulnerabilities in production dependencies
+      - name: Dependency audit
+        if: hashFiles('package-lock.json') != ''
+        run: npm audit --omit=dev --audit-level=high
+
+  # Blocks PRs that add dependencies with known vulnerabilities.
+  # Runs only when a PR changes dependency files. Needs the repo's Dependency graph turned on:
+  # Settings → Code security → Dependency graph.
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Did this PR change dependencies?
+        id: deps
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --name-only "$BASE" "$HEAD" | grep -qE '(^|/)(package(-lock)?\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|requirements[^/]*\.txt|poetry\.lock|Pipfile\.lock|go\.(mod|sum)|Cargo\.(toml|lock)|Gemfile\.lock)$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No dependency files changed; skipping review."
+          fi
+
+      - uses: actions/dependency-review-action@v5
+        if: steps.deps.outputs.changed == 'true'
+        with:
+          fail-on-severity: high
+
+  # "Docs move in the same PR as the code." Warns (doesn't fail) when a PR changes
+  # code but none of the planning docs.
+  docs-drift:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check docs moved with the code
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "Changed files:"; echo "$changed"
+          code="$(echo "$changed" | grep -E '^(src|app|lib|server|api|components|pages)/' || true)"
+          docs="$(echo "$changed" | grep -E '^(build-plan\.md|marketing-doc\.md|design-plan\.md|CLAUDE\.md|docs/)' || true)"
+          if [ -n "$code" ] && [ -z "$docs" ]; then
+            echo "::warning title=Docs not updated::This PR changes code but not build-plan.md, CLAUDE.md, marketing-doc.md, design-plan.md or docs/. At minimum, tick the story's tasks and status in build-plan.md."
+          else
+            echo "Docs check OK."
+          fi

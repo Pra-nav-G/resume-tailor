@@ -1,0 +1,15 @@
+{
+  "name": "dev-workflow-template",
+  "description": "Think → Design → Build workflow plugins by Pra-nav-G",
+  "owner": {
+    "name": "Pra-nav-G",
+    "url": "https://github.com/Pra-nav-G"
+  },
+  "plugins": [
+    {
+      "name": "think-design-build",
+      "source": "./",
+      "description": "Story loop, TDD, debugging, verification, security review and audit, spec-drift checks, scope changes, handoffs and review prep for Claude Code."
+    }
+  ]
+}

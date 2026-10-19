@@ -1,0 +1,25 @@
+{
+  "name": "think-design-build",
+  "displayName": "Think → Design → Build",
+  "version": "1.1.0",
+  "description": "Skills, subagents and hooks for spec-driven building with Claude Code: story loop, TDD, systematic debugging, verification, security review and audit, spec-drift checks, scope changes, handoffs and review prep.",
+  "author": {
+    "name": "Pra-nav-G",
+    "url": "https://github.com/Pra-nav-G"
+  },
+  "repository": "https://github.com/Pra-nav-G/dev-workflow-template",
+  "homepage": "https://github.com/Pra-nav-G/dev-workflow-template",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "spec-driven",
+    "tdd",
+    "debugging",
+    "security",
+    "code-review"
+  ],
+  "skills": [
+    "./.claude/skills/"
+  ],
+  "hooks": "./.claude/plugin-hooks.json"
+}

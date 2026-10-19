@@ -1,0 +1,20 @@
+# Dependabot: opens PRs to update vulnerable or outdated dependencies.
+# Also turn on Dependabot alerts: Settings → Code security.
+
+version: 2
+updates:
+  # Keeps the GitHub Actions used in .github/workflows up to date
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Uncomment once the project has a package.json (Dependabot reports an error if it doesn't exist)
+  # - package-ecosystem: npm
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #   groups:
+  #     minor-and-patch:
+  #       update-types: [minor, patch]
+  #   open-pull-requests-limit: 5
