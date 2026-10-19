@@ -36,7 +36,7 @@ jobs:
 
       # The Node steps run only once the project has a package.json.
       # Until then (a fresh copy of this template) CI passes on the checks above.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: hashFiles('package.json') != ''
         with:
           node-version: 22
