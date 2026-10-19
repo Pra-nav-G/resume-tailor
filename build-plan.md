@@ -1,4 +1,4 @@
-# Build Plan — [Project Name]
+# Build Plan — Resume Tailor
 
 > Written as an expert product owner. Derived from marketing-doc.md and design-plan.md.
 > **Rule:** a story is done only when its acceptance criteria pass AND it uses the design system.
@@ -6,94 +6,260 @@
 
 ## 1. Purpose
 
-[One paragraph lifted from marketing-doc.md.]
+A personal web app, installable on a phone and used on a laptop, that turns a pasted job description into a tailored, truthful resume built only from the owner's master resume, runs that work in the background, and keeps every application as its own tracked record.
 
 ## 2. Non-goals (from marketing-doc.md §4)
 
-- [Non-goal 1]
-- [Non-goal 2]
+- Auto-submitting applications or filling application forms
+- Scraping LinkedIn, Indeed or other boards that prohibit it
+- Inventing skills, titles, dates or metrics not in the master resume
+- Multi-user accounts, teams or billing
+- Using consumer AI subscriptions as the backend (API keys only)
 
 ## 3. Definition of done (applies to every story)
 
 - [ ] Acceptance criteria below all pass, each with a test written first
 - [ ] Uses design-system tokens/components; no bespoke styles
 - [ ] Every check in `CLAUDE.md` → Commands passes, run after the last change (output shown in the PR)
-- [ ] Security-reviewed if the story touches auth, payments, personal data, file uploads or user-generated content
+- [ ] Security-reviewed if the story touches auth, personal data (resume content, job history), stored API keys, or AI output shown to the user
 - [ ] Docs updated in the same PR (build-plan.md, CLAUDE.md if rules changed)
 - [ ] PR description carries the acceptance criteria as a checklist
 
 ## 4. Build order
 
-Dependency order, story by story.
-
 | Order | Epic | Why now |
 |---|---|---|
-| 0 | E0 Walking skeleton | Validates the whole handoff chain |
-| 1 | E1 [Epic name] | |
-| 2 | E2 [Epic name] | |
+| 0 | E0 Walking skeleton + pipeline spike | Validates the stack, background runs, and the riskiest assumption (output quality) before any UI |
+| 1 | E1 Access and AI settings | Nothing can run without sign-in and a working key |
+| 2 | E2 Master resume | The only source the pipeline may draw from |
+| 3 | E3 Applications and pipeline | The core value |
+| 4 | E4 Tracker | Keeps applications separate and findable |
+| 5 | E5 Phone and laptop polish | Makes the paste-and-go habit stick |
 
 ## 5. Sprint 0 — Walking skeleton
 
-One thin vertical slice through the whole stack, using real design tokens.
-
-- [ ] Repo scaffolded; branch protection on `main`
-- [ ] `design-system/tokens.css` imported and used by one real component
-- [ ] One route/screen renders end to end (UI → logic → data)
+- [ ] Repo scaffolded from the template; branch protection on `main`
+- [ ] Next.js app with `design-system/tokens.css` used by one real component
+- [ ] Applications page (SC-02) renders an empty state from the database (UI → server → Postgres)
+- [ ] A dummy 3-step background job runs to completion on the chosen host and writes its status to the database (tests ADR 0003)
 - [ ] CI runs lint + tests on push (green badge)
-- [ ] marketing-doc.md, design-plan.md, build-plan.md, CLAUDE.md, design-system/ committed
-- [ ] `.env` in `.gitignore`; secret-blocking hook active
+- [ ] `.env` in `.gitignore`; `.env.example` lists every variable; secret-blocking hook active
+- [ ] Deployed to a preview URL
 
 ## 6. Epics and stories
 
-### E0 — Walking skeleton
-**Goal:** prove stack, tokens, CI, and docs work together.
+### E0 — Walking skeleton and pipeline spike
+**Goal:** prove the stack, background execution and output quality.
 
-#### S-00 — [Story title]
-- **As a** [user], **I want** [capability], **so that** [outcome].
-- **Screens:** SC-01
+#### S-00 — Walking skeleton
+- **As the** owner, **I want** an empty Applications page served from the real database on a deployed URL, **so that** the whole stack and CI are proven before features.
+- **Screens:** SC-02
 - **Depends on:** —
 - **Acceptance criteria:**
-  - AC1 [observable, testable condition]
-  - AC2 [empty/error state uses the design system]
-  - AC3 [tests added, lint clean]
+  - AC1 Visiting `/` on the deployed URL shows SC-02's empty-state copy, read through a server query to Postgres (not hard-coded)
+  - AC2 A dummy job with 3 steps, each sleeping 20–40 s, completes on the deployed host; its run row ends as `succeeded` with 3 `done` steps
+  - AC3 Lint, unit tests and build pass in CI; the token check passes
 - **Tasks:**
-  - [ ] [task]
-  - [ ] [task]
-- **Open questions:** [none / list — agent must ask before assuming]
+  - [ ] Scaffold Next.js + TypeScript strict + Tailwind wired to tokens
+  - [ ] Database + migrations tool per ADR 0001; `runs` and `run_steps` tables
+  - [ ] Background runner per ADR 0003
+  - [ ] Deploy preview
+- **Open questions:** host and runner choice (ADR 0001, 0003) — confirm with `/grill-me S-00`
 
-### E1 — [Epic name]
-**Goal:** [outcome]
-**Boundaries (APIs / data shapes / events this epic owns):** [list, so parallel sessions don't collide]
+#### S-01 — Pipeline spike (no UI)
+- **As the** owner, **I want** to run the four pipeline steps from a script on 5 real job descriptions, **so that** I know the output is worth building an app around (kill criterion, marketing-doc §7).
+- **Screens:** —
+- **Depends on:** —
+- **Acceptance criteria:**
+  - AC1 `npm run spike -- <job.md>` reads a local master resume JSON and a job description file and writes `parsed.json`, `match.json`, `resume.json`, `review.json` to a gitignored `spike-output/` folder
+  - AC2 Every bullet in `resume.json` has `sourceIds` pointing at existing master-resume bullet IDs (schema-validated)
+  - AC3 Results for 5 real jobs logged in marketing-doc §7b: corrections needed and minutes saved; go / redesign decision recorded in §9
+  - AC4 Token usage and estimated cost printed per step
+- **Tasks:**
+  - [ ] Zod schemas for master resume, parsed job, match, resume, review (these become the shared data shapes)
+  - [ ] Prompts for each step in `src/pipeline/prompts/`
+- **Open questions:** which provider/model the owner has a key for first
 
-#### S-01 — [Story title]
-- **As a** … **I want** … **so that** …
-- **Screens:** SC-02
+### E1 — Access and AI settings
+**Goal:** only the owner can get in; the app can call any supported provider with the owner's key.
+**Boundaries:** owns `users`, `provider_credentials`, `model_settings`; exposes `getModelForStep(step)` to E3.
+
+#### S-02 — Single-user sign-in
+- **As the** owner, **I want** to sign in and have everyone else refused, **so that** my resume and job history stay private.
+- **Screens:** SC-01
 - **Depends on:** S-00
 - **Acceptance criteria:**
-  - AC1
-  - AC2
-  - AC3
-- **Tasks:**
-  - [ ]
-- **Open questions:**
+  - AC1 Signing in with the allowlisted account (env `ALLOWED_GITHUB_LOGIN`) reaches SC-02
+  - AC2 Any other account sees the "This app is private…" message and no data
+  - AC3 Every server route and action except sign-in returns 401 without a session (tested per route)
+  - AC4 Session cookie is httpOnly, secure, SameSite=Lax
+- **Tasks:** [ ] Auth per ADR 0005 · [ ] route-protection middleware + tests
+- **Open questions:** none once ADR 0005 is accepted. **Sensitive: security review.**
+
+#### S-03 — Bring-your-own API keys and model per step
+- **As the** owner, **I want** to save an API key for any supported provider and pick a model for each pipeline step, **so that** I can use whichever AI account I have.
+- **Screens:** SC-06
+- **Depends on:** S-02
+- **Acceptance criteria:**
+  - AC1 Supported providers at launch: Anthropic, OpenAI, Google, OpenRouter (list lives in one config file)
+  - AC2 Saving a key encrypts it with AES-256-GCM using `KEY_ENCRYPTION_SECRET`; the database never holds plaintext (test reads the raw row)
+  - AC3 After saving, the key is shown only as `••••last4`; it is never returned to the browser
+  - AC4 "Test key" makes one minimal call and shows "Key works." or the invalid message
+  - AC5 Each of the 4 steps has a model selector limited to providers with a saved key; defaults apply when unset
+  - AC6 Keys and prompts never appear in logs (test asserts logger output)
+- **Tasks:** [ ] provider registry per ADR 0002 · [ ] encryption helper + tests · [ ] settings UI
+- **Open questions:** default model per step. **Sensitive: security review.**
+
+### E2 — Master resume
+**Goal:** a structured source of truth the pipeline can cite.
+**Boundaries:** owns `master_resume_versions`; the `MasterResume` schema (from S-01) is a shared data shape — changes need a proposal.
+
+#### S-04 — Master resume editor
+- **As the** owner, **I want** to edit my contact details, summary, roles with bullets, projects, skills and education, **so that** every tailored resume draws from one place.
+- **Screens:** SC-05
+- **Depends on:** S-02, S-01 (schema)
+- **Acceptance criteria:**
+  - AC1 Every bullet, role, project and skill has a stable ID that survives edits and reordering
+  - AC2 Each save creates a new immutable version; runs record which version they used
+  - AC3 After a save, resumes built from an older version show the "stale" state on SC-04
+  - AC4 Server validates with the `MasterResume` schema; invalid input returns field errors
+  - AC5 Usable on a 375px-wide screen (e2e at mobile viewport)
+- **Tasks:** [ ] versioned storage · [ ] editor UI with add/reorder/delete
+- **Open questions:** none. **Sensitive (personal data): security review.**
+
+### E3 — Applications and pipeline
+**Goal:** paste a job, get a truthful tailored resume in the background.
+**Boundaries:** owns `applications`, `job_descriptions`, `runs`, `run_steps`, `resume_versions`; consumes `getModelForStep` (E1) and `MasterResume` (E2).
+
+#### S-06 — Paste a job description to start an application
+- **As the** owner, **I want** to paste a posting and tap one button, **so that** a tailored resume starts generating while I do something else.
+- **Screens:** SC-03
+- **Depends on:** S-03, S-04
+- **Acceptance criteria:**
+  - AC1 Submitting creates one application record with an immutable snapshot of the pasted text, optional URL, company and role
+  - AC2 Under 200 characters, or over 30,000, shows a validation error and creates nothing
+  - AC3 With no saved key, or no master resume, the matching blocker copy is shown and nothing is created
+  - AC4 The request returns in under 2 s and redirects to SC-04; generation continues if the page is closed
+  - AC5 Company and role left blank are filled from the parse step's output
+- **Open questions:** none
+
+#### S-07 — Background pipeline with visible progress
+- **As the** owner, **I want** to see each step's progress and have failures retried or clearly reported, **so that** I trust what's happening without watching it.
+- **Screens:** SC-04
+- **Depends on:** S-06, S-00 (runner)
+- **Acceptance criteria:**
+  - AC1 Steps run in order: parse → match → write → review; each step's output is validated against its schema and stored
+  - AC2 SC-04 shows each step as pending / running / done / failed, updating without a manual refresh (polling is fine)
+  - AC3 A provider error or invalid output retries the step up to 2 times, then marks the run failed with the step name
+  - AC4 "Try again" resumes from the failed step, reusing completed steps' outputs
+  - AC5 Only one run per application at a time
+- **Open questions:** none
+
+#### S-08 — Truthfulness guarantee
+- **As the** owner, **I want** every line in my resume to trace back to my master resume, **so that** nothing invented ever goes into an application.
+- **Screens:** SC-04
+- **Depends on:** S-07
+- **Acceptance criteria:**
+  - AC1 The write step's schema requires `sourceIds` on every bullet, summary sentence and skill; IDs must exist in the run's master-resume version (checked in code, not by the model)
+  - AC2 The review step compares each line to its sources and flags unsupported specifics (numbers, tools, titles, dates)
+  - AC3 Lines that fail the code check are removed and listed as flags; the resume is never shown with them
+  - AC4 Requirements the master resume can't support appear only in the Gaps list, never in the resume
+  - AC5 An adversarial fixture (job asking for skills absent from the master resume) produces gaps and zero unsupported lines
+- **Open questions:** none. **Sensitive (AI output shown as the user's claims): security review.**
+
+#### S-09 — Application detail
+- **As the** owner, **I want** one page per application with the resume, gaps, flags, notes and status, **so that** each application is self-contained.
+- **Screens:** SC-04
+- **Depends on:** S-08
+- **Acceptance criteria:**
+  - AC1 Shows company, role, link, status, dates, resume preview, gaps, flags, notes and the original job description
+  - AC2 "Regenerate" creates a new resume version; earlier versions stay viewable and labelled with date and model
+  - AC3 Flags can be marked resolved; notes save automatically
+  - AC4 One application's data never appears on another's page (test with two applications)
+
+#### S-10 — Download .docx
+- **As the** owner, **I want** to download the tailored resume as a Word file, **so that** I can upload it to any application form.
+- **Screens:** SC-04
+- **Depends on:** S-09
+- **Acceptance criteria:**
+  - AC1 "Download .docx" returns a file generated on demand from the stored resume version (no file storage)
+  - AC2 File name: `{Name}_Resume_{Company}_{Role}.docx`, sanitized
+  - AC3 The file opens in Word and Google Docs with headings, bullets and contact details intact (fixture snapshot test of the document XML)
+
+### E4 — Tracker
+**Goal:** see every application and where it stands.
+
+#### S-11 — Applications list
+- **As the** owner, **I want** a list of applications with status, filters and search, **so that** I always know what I've sent and where.
+- **Screens:** SC-02
+- **Depends on:** S-06
+- **Acceptance criteria:**
+  - AC1 Rows show company, role, status pill (text + icon), date generated, date applied
+  - AC2 Filters (All / Generated / Applied / Interviewing / Closed) and search by company or role work together
+  - AC3 Newest first; loading, empty and error states use the List component
+  - AC4 Phone: single column; laptop: list + detail side by side
+
+#### S-12 — Status and dates
+- **As the** owner, **I want** to update an application's status and follow-up date, **so that** the tracker stays accurate.
+- **Screens:** SC-02, SC-04
+- **Depends on:** S-11
+- **Acceptance criteria:**
+  - AC1 Statuses: generated, applied, interviewing, offer, rejected, withdrawn, archived
+  - AC2 "Mark as applied" sets status and date applied in one tap
+  - AC3 Every status change is stored with a timestamp (history visible on SC-04)
+  - AC4 Optional follow-up date; rows past their follow-up date are highlighted on SC-02
+
+### E5 — Phone and laptop polish
+**Goal:** make it feel like an app on the phone.
+
+#### S-13 — Installable PWA
+- **As the** owner, **I want** to add the app to my phone's home screen, **so that** pasting a job is one tap away.
+- **Screens:** all
+- **Depends on:** S-06
+- **Acceptance criteria:**
+  - AC1 Valid web manifest, icons and service worker; installable on iOS Safari and Android Chrome
+  - AC2 The share target (Android) accepts shared text into SC-03's job description field
+  - AC3 Lighthouse PWA and accessibility checks pass
+
+#### S-14 — Cost per run
+- **As the** owner, **I want** to see what each run and each month cost, **so that** API spend never surprises me.
+- **Screens:** SC-04, SC-06
+- **Depends on:** S-07, S-03
+- **Acceptance criteria:**
+  - AC1 Each step stores input/output tokens and model; cost is computed from a price table in one config file
+  - AC2 SC-04 shows the run's cost; SC-06 shows this month's total
+  - AC3 Unknown model price shows "cost unknown" rather than a wrong number
 
 ## 7. Traceability matrix
 
 | Story | Screens | Epic | Status |
 |---|---|---|---|
-| S-00 | SC-01 | E0 | ☐ |
-| S-01 | SC-02 | E1 | ☐ |
-| S-02 | SC-03 | E1 | ☐ |
+| S-00 | SC-02 | E0 | ☐ |
+| S-01 | — | E0 | ☐ |
+| S-02 | SC-01 | E1 | ☐ |
+| S-03 | SC-06 | E1 | ☐ |
+| S-04 | SC-05 | E2 | ☐ |
+| S-06 | SC-03 | E3 | ☐ |
+| S-07 | SC-04 | E3 | ☐ |
+| S-08 | SC-04 | E3 | ☐ |
+| S-09 | SC-04 | E3 | ☐ |
+| S-10 | SC-04 | E3 | ☐ |
+| S-11 | SC-02 | E4 | ☐ |
+| S-12 | SC-02, SC-04 | E4 | ☐ |
+| S-13 | all | E5 | ☐ |
+| S-14 | SC-04, SC-06 | E5 | ☐ |
+
+S-05 is reserved for "Import an existing resume" (backlog).
 
 ## 8. Workshop cycle (repeat)
 
 Review → refine stories → rebuild → re-verify. Every cycle ends with docs updated and committed.
-Stale documentation is how the agent starts guessing again.
 
 ## 9. Roadmap / backlog
 
-| Milestone | Epics | Target date |
+| Milestone | Epics / stories | Target date |
 |---|---|---|
-| Skeleton | E0 | |
-| MVP (smallest version that delivers core value) | E1–E3 | |
-| Next | | |
+| Skeleton + spike | S-00, S-01 | Week 1 |
+| MVP (usable for real applications) | E1–E4 | Week 3 |
+| Phone polish | E5 | Week 4 |
+| Next (backlog, not committed) | S-05 import existing resume (.docx/.pdf/paste) · PDF export · cover letter step · company research step · job feeds from public ATS boards (Greenhouse, Lever, Ashby) · push notification when a run finishes · CSV export of the tracker | — |

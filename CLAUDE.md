@@ -3,10 +3,10 @@ Steering file: the slides call it SteeringFile.md. Keep it named CLAUDE.md at th
 Keep it short, specific, and about HOW, not what (epics say what). Details live in .claude/rules/; don't repeat them here.
 Anti-patterns: pasting the whole spec in here · vague virtues ("write clean code") · rules nobody enforces.
 -->
-# Project: [Project Name]
+# Project: Resume Tailor
 
 ## Purpose
-[One paragraph, lifted from marketing-doc.md.]
+A personal, single-user web app (installable as a PWA) that turns a pasted job description into a tailored resume built **only** from the owner's master resume, runs the work in the background, and tracks each application as its own record. The owner applies manually; the app never submits applications.
 Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `design-system/`.
 
 ## Working principles
@@ -16,7 +16,7 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 - **Prove it:** define success as checks that can pass or fail (tests, the ACs), work until they pass, and show the output before saying it's done.
 
 ## Stack & conventions
-- [Next.js 15, TypeScript strict, Tailwind] — tokens come from `/design-system/tokens.css` (Tailwind theme: `/design-system/tailwind.config.js`); component props and states in `/design-system/components.md`
+- Next.js (App Router), TypeScript strict, Tailwind; Postgres via Drizzle (ADR 0001); AI calls only through `src/ai/` (ADR 0002); background runs only through `src/runner/` (ADR 0003) — tokens come from `/design-system/tokens.css` (Tailwind theme: `/design-system/tailwind.config.js`); component props and states in `/design-system/components.md`
 - Never add a dependency without asking
 - Prefer small, pure functions; no dead code
 - Components in PascalCase
@@ -44,6 +44,13 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 - Record hard-to-reverse technical decisions in `docs/decisions/` (copy `0000-template.md`)
 - New environment variables go in `.env.example` with a placeholder, never in code
 
+## Product rules (non-negotiable)
+- **Truthfulness:** generated resume content must cite master-resume IDs (`sourceIds`), checked in code, not by the model (ADR 0004). Never add a path that shows uncited content to the user.
+- **Separation:** every query on application data is scoped by application ID and the signed-in user; never mix applications.
+- **Provider-agnostic:** no provider SDK imported outside `src/ai/`. Model IDs and prices live in `src/ai/models.ts`.
+- **Secrets and personal data:** API keys encrypted at rest (AES-256-GCM), never sent to the browser, never logged. Never log job descriptions, resume content or prompts.
+- **Schemas are shared data shapes:** `src/pipeline/schemas.ts` changes need a proposal (`/sync-docs`).
+
 ## Before assuming, ask
 - Anything touching a sensitive area (auth, payments, personal data, uploads, user-generated content), including any new personal data field
 - Any story with an open question in `build-plan.md`
@@ -56,4 +63,4 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 - Add features that are not in `build-plan.md`
 
 ## Lessons learned (each correction becomes a rule; use /add-rule)
-- [date] [what the agent got wrong] → [rule that prevents it]
+- (none yet)

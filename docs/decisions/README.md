@@ -8,4 +8,8 @@ Product and scope decisions go in `marketing-doc.md` §9 Decision log. Technical
 
 | # | Decision | Status | Date |
 |---|---|---|---|
-| | | | |
+| 0001 | Stack and hosting: Next.js + Postgres (Neon) + Drizzle on Vercel | Proposed | 2026-10-18 |
+| 0002 | Provider-agnostic AI layer with bring-your-own keys | Proposed | 2026-10-18 |
+| 0003 | Background runs: Inngest, fallback to DB-chained steps | Proposed | 2026-10-18 |
+| 0004 | Source-traced resume content | Accepted | 2026-10-18 |
+| 0005 | Single-user auth: GitHub OAuth allowlist | Proposed | 2026-10-18 |

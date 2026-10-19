@@ -1,6 +1,6 @@
 # Security rules
 
-**Sensitive areas** (used across this repo): authentication and accounts, authorization and permissions, payments, personal data, file uploads, and user-generated content. A story that touches any of them gets a review from the `security-reviewer` subagent before its PR.
+**Sensitive areas** (used across this repo): authentication and accounts, authorization and permissions, payments, personal data (resume content, contact details, job history), stored AI provider API keys, file uploads, user-generated content, and AI output presented as the user's own claims. A story that touches any of them gets a review from the `security-reviewer` subagent before its PR.
 
 - **Secrets:** never in code, tests, logs, commits or error messages. Read them from environment variables; list each one in `.env.example` with a placeholder. If you find a secret in the repo, stop and tell the user; it must be rotated, not just deleted.
 - **Input:** treat everything from users, URLs, files, headers and third-party APIs as untrusted. Validate it on the server with a schema (type, length, format) even if the UI also validates.
