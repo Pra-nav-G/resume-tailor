@@ -1,20 +1,20 @@
-# [Project Name]
+# Resume Tailor
 
-[Five lines max: what it does, who it's for, why it's different, how to run it, status.]
+Paste a job description, get a tailored resume built only from your own master resume, and track every application separately. A personal web app for phone and laptop, using your own AI provider API key. **Status:** design complete, build not started.
 
-![CI](https://github.com/[user]/[repo]/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Pra-nav-G/resume-tailor/actions/workflows/ci.yml/badge.svg)
 
 ## What it does and who for
-- **For:** [target customer]
-- **Problem:** [one line]
-- **Solution:** [one line]
-- **Wedge:** [narrow first use case]
-- **Deliberately not doing:** [one line]
+- **For:** one job seeker (the owner) applying to many roles
+- **Problem:** tailoring a resume per job is slow, AI chat invents claims, and it's easy to lose track of what went where
+- **Solution:** a background pipeline (read job → match → write → check every claim) plus a per-application tracker
+- **Wedge:** paste a posting on your phone, download a .docx later
+- **Deliberately not doing:** auto-applying, scraping job boards that forbid it, or inventing experience
 
 ## Quick start
 ```bash
-git clone https://github.com/[user]/[repo].git
-cd [repo]
+git clone https://github.com/Pra-nav-G/resume-tailor.git
+cd resume-tailor
 npm ci
 npm run dev
 ```
@@ -46,7 +46,9 @@ One branch per story, PRs carry acceptance criteria, docs move in the same PR as
 - **Course/employer policy checked:** [yes — link or note]
 
 ## What I cut, and why
-- [Feature] — [reason]
+- Auto-applying — breaks many sites' terms; custom questions need human judgement
+- Separate native app — one installable web app covers phone and laptop
+- Using AI subscriptions as the backend — not possible for third-party apps; bring-your-own API key instead
 
 ## Where the agent was wrong
 - [Mistake] → caught by [test/review] → became rule in `CLAUDE.md`: "[rule]"

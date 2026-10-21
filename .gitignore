@@ -35,3 +35,7 @@ CLAUDE.local.md
 docs/review-prep.md
 # /security-audit reports: unfixed vulnerabilities must not be public
 docs/security-audit-*.md
+
+# Pipeline spike output (contains personal resume data)
+spike-output/
+fixtures/private/
