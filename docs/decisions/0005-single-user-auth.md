@@ -1,6 +1,6 @@
 # 0005: Single-user authentication
 
-**Status:** Proposed · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
+**Status:** Deferred to Phone access (change 2026-10-20) · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
 **Related:** S-02
 
 ## Context

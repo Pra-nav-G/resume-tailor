@@ -1,6 +1,6 @@
 # Resume Tailor
 
-Paste a job description, get a tailored resume built only from your own master resume, and track every application separately. A personal web app for phone and laptop, using your own AI provider API key. **Status:** design complete, build not started.
+Paste a job description, get a tailored resume built only from your own master resume, and track every application separately. A personal web app that runs locally on your laptop, using your own AI provider API key. **Status:** Sprint 0 (S-00) in progress.
 
 ![CI](https://github.com/Pra-nav-G/resume-tailor/actions/workflows/ci.yml/badge.svg)
 
@@ -8,7 +8,7 @@ Paste a job description, get a tailored resume built only from your own master r
 - **For:** one job seeker (the owner) applying to many roles
 - **Problem:** tailoring a resume per job is slow, AI chat invents claims, and it's easy to lose track of what went where
 - **Solution:** a background pipeline (read job → match → write → check every claim) plus a per-application tracker
-- **Wedge:** paste a posting on your phone, download a .docx later
+- **Wedge:** paste a posting, download a tailored .docx a minute later
 - **Deliberately not doing:** auto-applying, scraping job boards that forbid it, or inventing experience
 
 ## Quick start
@@ -16,8 +16,10 @@ Paste a job description, get a tailored resume built only from your own master r
 git clone https://github.com/Pra-nav-G/resume-tailor.git
 cd resume-tailor
 npm ci
-npm run dev
+cp .env.example .env   # then fill in KEY_ENCRYPTION_SECRET
+npm run dev            # http://127.0.0.1:3000
 ```
+Data is stored in `data/resume-tailor.db`. Back that file up; it isn't in git.
 
 ## How this project is built
 | File | What it is |
@@ -47,7 +49,8 @@ One branch per story, PRs carry acceptance criteria, docs move in the same PR as
 
 ## What I cut, and why
 - Auto-applying — breaks many sites' terms; custom questions need human judgement
-- Separate native app — one installable web app covers phone and laptop
+- Separate native app — one responsive web app; phone access comes later
+- Hosting — runs locally on the laptop for now (docs/changes/2026-10-20-local-only.md)
 - Using AI subscriptions as the backend — not possible for third-party apps; bring-your-own API key instead
 
 ## Where the agent was wrong
