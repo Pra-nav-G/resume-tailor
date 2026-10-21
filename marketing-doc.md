@@ -3,7 +3,7 @@
 > Source of truth. Every other file (design-plan.md, build-plan.md, CLAUDE.md) derives from this one.
 > When the answer to anything below changes, change it HERE first.
 
-**Status:** Draft v0.1 · **Owner:** @Pra-nav-G · **Last updated:** 2026-10-18
+**Status:** Draft v0.2 · **Owner:** @Pra-nav-G · **Last updated:** 2026-10-20
 
 > **Context:** this is a personal tool for one job seeker (the owner), not a business. Gates 2 and 4 are answered for a single user; the real tests are "do I use it" and "does it save me time without hurting quality".
 
@@ -11,7 +11,7 @@
 
 ## 1. Positioning (one sentence)
 
-For **a job seeker applying to many roles** who **spends too long rewriting a resume for each posting**, **Resume Tailor** is a **personal web app** that **turns a pasted job description into a tailored, truthful resume and tracks every application separately**.
+For **a job seeker applying to many roles** who **spends too long rewriting a resume for each posting**, **Resume Tailor** is a **personal web app, run locally on the laptop,** that **turns a pasted job description into a tailored, truthful resume and tracks every application separately**.
 Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master resume the user maintains, check every claim against it, and keep a per-application record of what was sent where**.
 
 ## 1b. Lean Canvas (one-screen summary)
@@ -24,11 +24,11 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
 
 | Cost structure | Revenue streams |
 |---|---|
-| Hosting (free tiers), Postgres (free tier), AI API usage (cents per resume). | None. Personal tool. |
+| AI API usage only (cents per resume). Runs on the owner's laptop; no hosting costs. | None. Personal tool. |
 
 ## 2. Problem (Gate 1)
 
-- **Who specifically has this problem:** the owner, actively applying to jobs, from a phone during the day and a laptop at home.
+- **Who specifically has this problem:** the owner, actively applying to jobs, mostly from a laptop at home (phone use is wanted later; see §9 2026-10-20).
 - **How they solve it today:** editing a resume by hand per job, or pasting the job description into an AI chat and copying results back.
 - **What the workaround costs them:** time per application; risk of AI-invented claims; no record of which version went where.
 - **Vitamin, painkiller, or cure?** Painkiller during an active search; irrelevant otherwise.
@@ -60,6 +60,7 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
   - Inventing skills, titles, dates or metrics not in the master resume
   - Multi-user accounts, teams, or billing
   - Using consumer AI subscriptions (Claude Pro, ChatGPT Plus) as the backend; API keys only
+  - Hosting it on the internet (for now; the app runs only on the owner's laptop)
 - **Gate 3 decision:** ☑ Go
 
 ## 5. Money (Gate 4)
@@ -73,10 +74,10 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
 ## 6. Feasibility (Gate 5)
 
 - **Riskiest technical assumption + cheapest test:** that the pipeline produces resumes the owner would send with light edits and **no invented claims**. Test: run the pipeline by hand (prompts only, no app) on 5 real job descriptions and count corrections (S-01 spike).
-- **Second risk:** background runs of 1–3 minutes on serverless hosting without timeouts. Test: in Sprint 0, run a 3-step dummy job end to end on the chosen host.
-- **Data, integrations, permissions I don't control:** AI provider APIs and their pricing; hosting and database free tiers.
-- **Regulatory and trust surface:** personal data (resume contents, contact details, job history), stored API keys. Single user, but the app is on the public internet, so auth and encryption are required.
-- **Smallest version that delivers the core value (MVP):** single-user login, master resume editor, paste job description → background pipeline → tailored .docx + gap list, application list with status, works on phone and laptop.
+- **Second risk:** a run is interrupted when the laptop sleeps or the server restarts. Test: in Sprint 0, a dummy job's state lives in the database; S-07 marks interrupted runs as failed so they can be resumed.
+- **Data, integrations, permissions I don't control:** AI provider APIs and their pricing.
+- **Regulatory and trust surface:** personal data (resume contents, contact details, job history), stored API keys. The app listens only on `127.0.0.1`, so sign-in isn't needed yet; API keys are still encrypted at rest, and the database file is never committed. Sign-in becomes required when phone access is added.
+- **Smallest version that delivers the core value (MVP):** runs locally on the laptop: master resume editor, paste job description → background pipeline → tailored .docx + gap list, application list with status.
 - **Gate 5 decision:** ☑ Go, pending the S-01 spike.
 
 ## 7. Red-team results
@@ -86,7 +87,8 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
 |---|---|---|
 | Output needed so much editing it wasn't faster than doing it by hand | Yes | S-01 spike: correction count on 5 real jobs |
 | AI invented a claim that ended up on a real application | Yes | Reviewer step + every bullet carries a source reference; test with adversarial job descriptions |
-| Phone experience too clunky, so the paste-and-go habit never formed | Yes | Use it on a phone for a week after MVP |
+| Laptop-only means postings seen on the phone never get pasted in | Yes | Track during MVP how often a posting waits for the laptop; triggers the Phone access milestone |
+| Laptop lost or disk fails, taking the tracker with it | Yes | The database is one file; back it up (export story in backlog) |
 | Too much building, not enough applying | Yes | Hard MVP scope; time-box to the milestones in build-plan.md |
 
 ### Assumptions, ranked
@@ -94,7 +96,7 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
 |---|---|---|---|
 | 1 | A tailored resume from the pipeline needs only light edits | None | S-01 spike on 5 real job descriptions |
 | 2 | Source-traced bullets prevent invented claims | Design reasoning only | Adversarial job descriptions asking for skills the owner lacks |
-| 3 | Background generation is fine on free-tier serverless | None | Sprint 0 dummy job |
+| 3 | An in-process background job is reliable enough on a laptop | None | Sprint 0 dummy job; S-07 restart recovery |
 | 4 | Per-resume API cost stays small | Public pricing | Log token usage per run |
 
 ### Kill criteria
@@ -102,12 +104,12 @@ Unlike **ChatGPT-in-a-tab or resume-builder SaaS**, we **only draw from a master
 - If the owner hasn't used the MVP for a real application within 2 weeks of it working, stop adding features.
 
 ### Toughest objections
-1. "Just use Claude Code with a command, it's free with your subscription." Fair: the fallback. The app exists for phone use, a real tracker and provider choice.
+1. "Just use Claude Code with a command, it's free with your subscription." Fair: the fallback. The app exists for a real tracker, provider choice and, later, phone use.
 2. "Recruiters can tell AI-written resumes." Mitigated by writing only from the owner's own bullets and a review step before sending.
-3. "Storing resume data and API keys online is a risk." Mitigated by single-user auth, encryption of keys at rest, no logging of personal data.
+3. "Storing resume data and API keys is a risk." Mitigated by keeping everything on the laptop, a localhost-only server, encryption of keys at rest, and no logging of personal data.
 
 ### Research list
-- Hosting limits for 1–3 minute background work (Vercel, Railway, Inngest, Trigger.dev free tiers).
+- When phone access is added: same Wi-Fi vs Tailscale, and which sign-in.
 - Which providers the owner will actually use first.
 
 ## 7b. User interview log
@@ -132,3 +134,4 @@ Single user (the owner). Instead of interviews, log real uses here after MVP.
 | 2026-10-18 | One responsive web app, installable as a PWA, instead of separate native and web apps | One codebase for phone and laptop | design-plan.md, build-plan.md |
 | 2026-10-18 | Bring-your-own API key, provider-agnostic | Consumer subscriptions can't back a third-party app; the owner wants to switch providers | §4, docs/decisions/0002 |
 | 2026-10-18 | Each application is its own record with its own job description snapshot, analysis and resume versions | Keep applications separate and auditable | build-plan.md E2 |
+| 2026-10-20 | Run locally on the laptop only: SQLite file, in-process background runner, server bound to localhost. Sign-in and PWA deferred to a "Phone access" milestone | Owner prefers not to host for now; removes three services and internet-facing auth from the MVP | §1, §4, §6, §7; design-plan.md; build-plan.md S-00, S-02, S-07, S-13; CLAUDE.md; docs/decisions/0006; docs/changes/2026-10-20-local-only.md |

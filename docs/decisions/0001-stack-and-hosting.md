@@ -1,6 +1,6 @@
 # 0001: Stack and hosting
 
-**Status:** Proposed (confirm in `/grill-me S-00`) · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
+**Status:** Replaced by 0006 · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
 **Related:** S-00
 
 ## Context

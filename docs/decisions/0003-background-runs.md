@@ -1,6 +1,6 @@
 # 0003: Running the pipeline in the background
 
-**Status:** Proposed (decided by the S-00 dummy-job test) · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
+**Status:** Replaced by 0006 · **Date:** 2026-10-18 · **Decided by:** @Pra-nav-G
 **Related:** S-00, S-07
 
 ## Context

@@ -6,7 +6,7 @@
 
 ## 1. Purpose
 
-A personal web app, installable on a phone and used on a laptop, that turns a pasted job description into a tailored, truthful resume built only from the owner's master resume, runs that work in the background, and keeps every application as its own tracked record.
+A personal web app that runs locally on the owner's laptop (phone access later) and turns a pasted job description into a tailored, truthful resume built only from the owner's master resume, runs that work in the background, and keeps every application as its own tracked record.
 
 ## 2. Non-goals (from marketing-doc.md §4)
 
@@ -15,6 +15,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 - Inventing skills, titles, dates or metrics not in the master resume
 - Multi-user accounts, teams or billing
 - Using consumer AI subscriptions as the backend (API keys only)
+- Hosting it on the internet (for now; see docs/changes/2026-10-20-local-only.md)
 
 ## 3. Definition of done (applies to every story)
 
@@ -30,21 +31,21 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 | Order | Epic | Why now |
 |---|---|---|
 | 0 | E0 Walking skeleton + pipeline spike | Validates the stack, background runs, and the riskiest assumption (output quality) before any UI |
-| 1 | E1 Access and AI settings | Nothing can run without sign-in and a working key |
+| 1 | E1 AI settings | Nothing can run without a working key (sign-in deferred) |
 | 2 | E2 Master resume | The only source the pipeline may draw from |
 | 3 | E3 Applications and pipeline | The core value |
 | 4 | E4 Tracker | Keeps applications separate and findable |
-| 5 | E5 Phone and laptop polish | Makes the paste-and-go habit stick |
+| 5 | E5 Polish | Cost visibility; phone install deferred to Phone access |
 
 ## 5. Sprint 0 — Walking skeleton
 
-- [ ] Repo scaffolded from the template; branch protection on `main`
+- [x] Repo scaffolded from the template; branch protection on `main`
 - [ ] Next.js app with `design-system/tokens.css` used by one real component
-- [ ] Applications page (SC-02) renders an empty state from the database (UI → server → Postgres)
-- [ ] A dummy 3-step background job runs to completion on the chosen host and writes its status to the database (tests ADR 0003)
+- [ ] Applications page (SC-02) renders an empty state from the database (UI → server → SQLite)
+- [ ] A dummy 3-step background job runs to completion in the server process and writes its status to the database (ADR 0006)
+- [ ] Server reachable only on `127.0.0.1`
 - [ ] CI runs lint + tests on push (green badge)
-- [ ] `.env` in `.gitignore`; `.env.example` lists every variable; secret-blocking hook active
-- [ ] Deployed to a preview URL
+- [ ] `.env` and `data/` in `.gitignore`; `.env.example` lists every variable; secret-blocking hook active
 
 ## 6. Epics and stories
 
@@ -52,19 +53,21 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 **Goal:** prove the stack, background execution and output quality.
 
 #### S-00 — Walking skeleton
-- **As the** owner, **I want** an empty Applications page served from the real database on a deployed URL, **so that** the whole stack and CI are proven before features.
+- **As the** owner, **I want** an empty Applications page served from the real local database, **so that** the whole stack and CI are proven before features.
 - **Screens:** SC-02
 - **Depends on:** —
 - **Acceptance criteria:**
-  - AC1 Visiting `/` on the deployed URL shows SC-02's empty-state copy, read through a server query to Postgres (not hard-coded)
-  - AC2 A dummy job with 3 steps, each sleeping 20–40 s, completes on the deployed host; its run row ends as `succeeded` with 3 `done` steps
-  - AC3 Lint, unit tests and build pass in CI; the token check passes
+  - AC1 After `npm run dev`, visiting `http://127.0.0.1:3000/` shows SC-02's empty-state copy, read through a server query to SQLite (not hard-coded). The database file is created and migrated automatically at `DATABASE_PATH` (default `data/resume-tailor.db`)
+  - AC2 `npm run dev` and `npm start` bind to `127.0.0.1` only
+  - AC3 A dummy job with 3 steps keeps running after the call that started it returns; each step's status is written to the database as it changes, and the run ends `succeeded` with 3 `done` steps (integration test against a real temporary SQLite file)
+  - AC4 Lint, unit tests, the end-to-end test of AC1, and build pass in CI; the token check passes
+  - AC5 `data/` and `*.db` files are gitignored, so the database (personal data) can't be committed
 - **Tasks:**
   - [ ] Scaffold Next.js + TypeScript strict + Tailwind wired to tokens
-  - [ ] Database + migrations tool per ADR 0001; `runs` and `run_steps` tables
-  - [ ] Background runner per ADR 0003
-  - [ ] Deploy preview
-- **Open questions:** host and runner choice (ADR 0001, 0003) — confirm with `/grill-me S-00`
+  - [ ] SQLite + Drizzle migrations per ADR 0006; `runs` and `run_steps` tables
+  - [ ] In-process runner in `src/runner/` per ADR 0006
+  - [ ] Empty-state List on SC-02
+- **Open questions:** none (resolved 2026-10-20: local only, SQLite, localhost only)
 
 #### S-01 — Pipeline spike (no UI)
 - **As the** owner, **I want** to run the four pipeline steps from a script on 5 real job descriptions, **so that** I know the output is worth building an app around (kill criterion, marketing-doc §7).
@@ -81,10 +84,11 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 - **Open questions:** which provider/model the owner has a key for first
 
 ### E1 — Access and AI settings
-**Goal:** only the owner can get in; the app can call any supported provider with the owner's key.
-**Boundaries:** owns `users`, `provider_credentials`, `model_settings`; exposes `getModelForStep(step)` to E3.
+**Goal:** the app can call any supported provider with the owner's key. (Sign-in deferred to Phone access.)
+**Boundaries:** owns `provider_credentials`, `model_settings`; exposes `getModelForStep(step)` to E3.
 
-#### S-02 — Single-user sign-in
+#### S-02 — Single-user sign-in — Deferred to Phone access (change 2026-10-20)
+> While the server listens only on `127.0.0.1` (S-00 AC2), there is nobody else to keep out. Build this before the app is reachable from any other device.
 - **As the** owner, **I want** to sign in and have everyone else refused, **so that** my resume and job history stay private.
 - **Screens:** SC-01
 - **Depends on:** S-00
@@ -99,7 +103,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 #### S-03 — Bring-your-own API keys and model per step
 - **As the** owner, **I want** to save an API key for any supported provider and pick a model for each pipeline step, **so that** I can use whichever AI account I have.
 - **Screens:** SC-06
-- **Depends on:** S-02
+- **Depends on:** S-00
 - **Acceptance criteria:**
   - AC1 Supported providers at launch: Anthropic, OpenAI, Google, OpenRouter (list lives in one config file)
   - AC2 Saving a key encrypts it with AES-256-GCM using `KEY_ENCRYPTION_SECRET`; the database never holds plaintext (test reads the raw row)
@@ -117,7 +121,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 #### S-04 — Master resume editor
 - **As the** owner, **I want** to edit my contact details, summary, roles with bullets, projects, skills and education, **so that** every tailored resume draws from one place.
 - **Screens:** SC-05
-- **Depends on:** S-02, S-01 (schema)
+- **Depends on:** S-00, S-01 (schema)
 - **Acceptance criteria:**
   - AC1 Every bullet, role, project and skill has a stable ID that survives edits and reordering
   - AC2 Each save creates a new immutable version; runs record which version they used
@@ -153,6 +157,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
   - AC3 A provider error or invalid output retries the step up to 2 times, then marks the run failed with the step name
   - AC4 "Try again" resumes from the failed step, reusing completed steps' outputs
   - AC5 Only one run per application at a time
+  - AC6 On server start, runs left `running` by a restart or shutdown are marked failed with reason "interrupted"; SC-04 shows the Interrupted copy and "Try again" resumes them (AC4)
 - **Open questions:** none
 
 #### S-08 — Truthfulness guarantee
@@ -209,10 +214,10 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
   - AC3 Every status change is stored with a timestamp (history visible on SC-04)
   - AC4 Optional follow-up date; rows past their follow-up date are highlighted on SC-02
 
-### E5 — Phone and laptop polish
-**Goal:** make it feel like an app on the phone.
+### E5 — Polish
+**Goal:** cost visibility now; phone install once phone access exists.
 
-#### S-13 — Installable PWA
+#### S-13 — Installable PWA — Deferred to Phone access (change 2026-10-20)
 - **As the** owner, **I want** to add the app to my phone's home screen, **so that** pasting a job is one tap away.
 - **Screens:** all
 - **Depends on:** S-06
@@ -236,7 +241,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 |---|---|---|---|
 | S-00 | SC-02 | E0 | ☐ |
 | S-01 | — | E0 | ☐ |
-| S-02 | SC-01 | E1 | ☐ |
+| S-02 | SC-01 | E1 | Deferred |
 | S-03 | SC-06 | E1 | ☐ |
 | S-04 | SC-05 | E2 | ☐ |
 | S-06 | SC-03 | E3 | ☐ |
@@ -246,7 +251,7 @@ A personal web app, installable on a phone and used on a laptop, that turns a pa
 | S-10 | SC-04 | E3 | ☐ |
 | S-11 | SC-02 | E4 | ☐ |
 | S-12 | SC-02, SC-04 | E4 | ☐ |
-| S-13 | all | E5 | ☐ |
+| S-13 | all | E5 | Deferred |
 | S-14 | SC-04, SC-06 | E5 | ☐ |
 
 S-05 is reserved for "Import an existing resume" (backlog).
@@ -260,6 +265,7 @@ Review → refine stories → rebuild → re-verify. Every cycle ends with docs 
 | Milestone | Epics / stories | Target date |
 |---|---|---|
 | Skeleton + spike | S-00, S-01 | Week 1 |
-| MVP (usable for real applications) | E1–E4 | Week 3 |
-| Phone polish | E5 | Week 4 |
-| Next (backlog, not committed) | S-05 import existing resume (.docx/.pdf/paste) · PDF export · cover letter step · company research step · job feeds from public ATS boards (Greenhouse, Lever, Ashby) · push notification when a run finishes · CSV export of the tracker | — |
+| MVP on the laptop (usable for real applications) | S-03, S-04, E3, E4 | Week 3 |
+| Cost visibility | S-14 | Week 4 |
+| Phone access (deferred) | Reach from phone (same Wi-Fi or Tailscale) · S-02 sign-in · S-13 PWA | When the owner asks |
+| Next (backlog, not committed) | S-05 import existing resume (.docx/.pdf/paste) · PDF export · cover letter step · company research step · job feeds from public ATS boards (Greenhouse, Lever, Ashby) · push notification when a run finishes · CSV export / backup of the tracker and database | — |

@@ -5,7 +5,7 @@
 
 ## 1. Narrative
 
-The user is in the middle of a job search: on the bus with a posting open on their phone, or at a laptop working through a list of applications. Before, every application meant another hour of rewriting and a vague memory of which resume went where. After, they paste the posting, put the phone away, and come back to a tailored resume they trust, with a clear list of what to double-check and a tracker that shows exactly where each application stands.
+The user is in the middle of a job search, at their laptop working through a list of applications (phone access comes later). Before, every application meant another hour of rewriting and a vague memory of which resume went where. After, they paste the posting, move on to the next one, and come back to a tailored resume they trust, with a clear list of what to double-check and a tracker that shows exactly where each application stands.
 
 ## 2. Tone, mood & personality
 
@@ -19,7 +19,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 | Reference (like this) | What to take from it |
 |---|---|
 | Linear issue list | Dense, scannable rows with status pills; keyboard-friendly on laptop |
-| Apple Notes / Things on iPhone | One-thumb input, big paste area, calm typography |
+| Apple Notes / Things on iPhone | Big paste area, calm typography; one-thumb input matters once phone access arrives |
 | GitHub pull request "checks" panel | Step-by-step run progress with clear pass / running / failed states |
 
 | Anti-reference (NOT like this) | What to avoid |
@@ -36,8 +36,8 @@ The user is in the middle of a job search: on the bus with a posting open on the
 - **Radii:** 8px soft
 - **Elevation:** flat with subtle shadows on cards
 - **Motion:** subtle; only for step progress and toasts
-- **Layout:** mobile-first, one column under 768px; two-pane (list + detail) on laptop
-- **Dark mode:** required (phone use at night)
+- **Layout:** laptop first (two-pane list + detail); stays responsive down to one column under 768px so phone access later needs no redesign
+- **Dark mode:** required
 - **Accessibility floor:** WCAG AA contrast, visible focus states, keyboard-reachable, 44px touch targets, status never shown by colour alone (pill text + icon)
 
 ## 5. Build order for Claude Design (tokens first, pages last)
@@ -70,7 +70,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 
 | ID | Screen | Purpose | Stories |
 |---|---|---|---|
-| SC-01 | Sign in | Single-user sign-in | S-02 |
+| SC-01 | Sign in | Single-user sign-in. **Deferred** to Phone access (change 2026-10-20) | S-02 (deferred) |
 | SC-02 | Applications (home / tracker) | List, filter and search every application by status | S-00, S-11, S-12 |
 | SC-03 | New application | Paste a job description, optional URL / company / role, start generation | S-06 |
 | SC-04 | Application detail | Run progress, resume preview, gaps and flags, notes, status, download, regenerate | S-07, S-08, S-09, S-10, S-12, S-14 |
@@ -79,7 +79,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 
 ## 8. Real copy (no lorem ipsum)
 
-**SC-01 Sign in**
+**SC-01 Sign in** (deferred to Phone access)
 - Headline: "Resume Tailor"
 - Subhead: "Paste a job. Get an honest, tailored resume."
 - Primary CTA: "Sign in with GitHub"
@@ -101,7 +101,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 - Primary CTA: "Tailor my resume"
 - Validation: "Paste a job description of at least 200 characters."
 - No API key: "Add an AI provider key in Settings before generating." · CTA "Open settings"
-- Started toast: "Working on it. You can close this page; it keeps going."
+- Started toast: "Working on it. You can close this page; it keeps going while the app is running."
 
 **SC-04 Application detail**
 - Steps: "Reading the job" · "Matching your experience" · "Writing your resume" · "Checking every claim"
@@ -112,6 +112,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 - Actions: "Download .docx" · "Regenerate" · "Mark as applied"
 - Stale: "Your master resume changed after this was generated." · CTA "Regenerate"
 - Failed: "Something went wrong at '{step}'. Nothing was charged beyond the steps that ran." · CTA "Try again"
+- Interrupted: "This run stopped when the app was closed. Pick up where it left off?" · CTA "Try again"
 - Notes placeholder: "Recruiter name, referral, follow-up plans…"
 - Cost line: "This run used about {cost}."
 
@@ -136,6 +137,7 @@ The user is in the middle of a job search: on the bus with a posting open on the
 ## 9. Out of scope for design
 
 - Landing / marketing pages (single-user app)
+- Hosting, sign-in and phone install (deferred to the Phone access milestone)
 - Auto-apply and form-filling flows
 - Multi-user, sharing, teams, billing
 - Multiple resume visual templates (one clean template for MVP)

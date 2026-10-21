@@ -6,7 +6,7 @@ Anti-patterns: pasting the whole spec in here · vague virtues ("write clean cod
 # Project: Resume Tailor
 
 ## Purpose
-A personal, single-user web app (installable as a PWA) that turns a pasted job description into a tailored resume built **only** from the owner's master resume, runs the work in the background, and tracks each application as its own record. The owner applies manually; the app never submits applications.
+A personal, single-user web app that runs locally on the owner's laptop and turns a pasted job description into a tailored resume built **only** from the owner's master resume, runs the work in the background, and tracks each application as its own record. The owner applies manually; the app never submits applications.
 Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `design-system/`.
 
 ## Working principles
@@ -16,7 +16,7 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 - **Prove it:** define success as checks that can pass or fail (tests, the ACs), work until they pass, and show the output before saying it's done.
 
 ## Stack & conventions
-- Next.js (App Router), TypeScript strict, Tailwind; Postgres via Drizzle (ADR 0001); AI calls only through `src/ai/` (ADR 0002); background runs only through `src/runner/` (ADR 0003) — tokens come from `/design-system/tokens.css` (Tailwind theme: `/design-system/tailwind.config.js`); component props and states in `/design-system/components.md`
+- Next.js (App Router), TypeScript strict, Tailwind; SQLite via Drizzle (ADR 0006); AI calls only through `src/ai/` (ADR 0002); background runs only through `src/runner/`, in-process with state in the database (ADR 0006); the server binds to `127.0.0.1` only — tokens come from `/design-system/tokens.css` (Tailwind theme: `/design-system/tailwind.config.js`); component props and states in `/design-system/components.md`
 - Never add a dependency without asking
 - Prefer small, pure functions; no dead code
 - Components in PascalCase
@@ -46,7 +46,7 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 
 ## Product rules (non-negotiable)
 - **Truthfulness:** generated resume content must cite master-resume IDs (`sourceIds`), checked in code, not by the model (ADR 0004). Never add a path that shows uncited content to the user.
-- **Separation:** every query on application data is scoped by application ID and the signed-in user; never mix applications.
+- **Separation:** every query on application data is scoped by application ID (and by the signed-in user once S-02 exists); never mix applications.
 - **Provider-agnostic:** no provider SDK imported outside `src/ai/`. Model IDs and prices live in `src/ai/models.ts`.
 - **Secrets and personal data:** API keys encrypted at rest (AES-256-GCM), never sent to the browser, never logged. Never log job descriptions, resume content or prompts.
 - **Schemas are shared data shapes:** `src/pipeline/schemas.ts` changes need a proposal (`/sync-docs`).
@@ -57,7 +57,8 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 - Any change to the design system or shared data shapes
 
 ## Never
-- Commit secrets or `.env` files
+- Commit secrets, `.env` files or the database (`data/`, `*.db`): it holds personal data
+- Make the server reachable beyond `127.0.0.1` before S-02 sign-in exists
 - Edit generated files
 - Skip a gate (tests, lint, token check, acceptance criteria)
 - Add features that are not in `build-plan.md`

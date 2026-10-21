@@ -39,3 +39,10 @@ docs/security-audit-*.md
 # Pipeline spike output (contains personal resume data)
 spike-output/
 fixtures/private/
+
+# Local database (personal data). Never commit.
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
