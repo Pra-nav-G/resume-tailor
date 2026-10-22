@@ -75,7 +75,14 @@ describe("startRun", () => {
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Closing the connection makes the runner's next status write throw
-    startRun(db, [{ name: "one", run: async () => db.$client.close() }]);
+    startRun(db, [
+      {
+        name: "one",
+        run: async () => {
+          db.$client.close();
+        },
+      },
+    ]);
 
     await vi.waitFor(() => expect(logged).toHaveBeenCalledWith(expect.stringMatching(/stopped unexpectedly/)));
     logged.mockRestore();
