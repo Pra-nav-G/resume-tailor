@@ -16,7 +16,9 @@ export function startRun(db: Db, steps: JobStep[]): number {
       .run();
     return id;
   });
-  void execute(db, runId, steps);
+  // A failed status write must not become an unhandled rejection in the server process.
+  // The run stays "running" until startup recovery (S-07 AC6) marks it interrupted.
+  execute(db, runId, steps).catch(() => console.error(`Run ${runId} stopped unexpectedly`));
   return runId;
 }
 

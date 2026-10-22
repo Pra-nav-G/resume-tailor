@@ -69,4 +69,15 @@ describe("startRun", () => {
     expect(stepStatuses(db, runId)).toEqual(["done", "failed", "pending"]);
     expect(third).not.toHaveBeenCalled();
   });
+
+  it("logs a generic message instead of an unhandled rejection when the database write itself fails", async () => {
+    const db = tempDb();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Closing the connection makes the runner's next status write throw
+    startRun(db, [{ name: "one", run: async () => db.$client.close() }]);
+
+    await vi.waitFor(() => expect(logged).toHaveBeenCalledWith(expect.stringMatching(/stopped unexpectedly/)));
+    logged.mockRestore();
+  });
 });
