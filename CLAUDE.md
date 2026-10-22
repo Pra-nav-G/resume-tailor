@@ -24,7 +24,8 @@ Plan: see `build-plan.md`. Spec: see `marketing-doc.md`. Design system: see `des
 ## Commands
 - Install: `npm ci`
 - Dev: `npm run dev`
-- Test: `npm test` · end-to-end: `npm run test:e2e`
+- Test: `npm test` · end-to-end: `npm run test:e2e` (first time: `npx playwright install chromium`)
+- New migration after changing `src/db/schema.ts`: `npm run db:generate` (writes `drizzle/`, a generated folder)
 - Lint: `npm run lint`
 - Build: `npm run build`
 - Design-token check: `bash scripts/check-design-tokens.sh`

@@ -40,10 +40,10 @@ A personal web app that runs locally on the owner's laptop (phone access later) 
 ## 5. Sprint 0 — Walking skeleton
 
 - [x] Repo scaffolded from the template; branch protection on `main`
-- [ ] Next.js app with `design-system/tokens.css` used by one real component
-- [ ] Applications page (SC-02) renders an empty state from the database (UI → server → SQLite)
-- [ ] A dummy 3-step background job runs to completion in the server process and writes its status to the database (ADR 0006)
-- [ ] Server reachable only on `127.0.0.1`
+- [x] Next.js app with `design-system/tokens.css` used by one real component
+- [x] Applications page (SC-02) renders an empty state from the database (UI → server → SQLite)
+- [x] A dummy 3-step background job runs to completion in the server process and writes its status to the database (ADR 0006); proven by the runner integration test
+- [x] Server reachable only on `127.0.0.1`
 - [ ] CI runs lint + tests on push (green badge)
 - [ ] `.env` and `data/` in `.gitignore`; `.env.example` lists every variable; secret-blocking hook active
 
@@ -63,10 +63,10 @@ A personal web app that runs locally on the owner's laptop (phone access later) 
   - AC4 Lint, unit tests, the end-to-end test of AC1, and build pass in CI; the token check passes
   - AC5 `data/` and `*.db` files are gitignored, so the database (personal data) can't be committed
 - **Tasks:**
-  - [ ] Scaffold Next.js + TypeScript strict + Tailwind wired to tokens
-  - [ ] SQLite + Drizzle migrations per ADR 0006; `runs` and `run_steps` tables
-  - [ ] In-process runner in `src/runner/` per ADR 0006
-  - [ ] Empty-state List on SC-02
+  - [x] Scaffold Next.js + TypeScript strict + Tailwind wired to tokens
+  - [x] SQLite + Drizzle migrations per ADR 0006; `runs` and `run_steps` tables (plus a minimal `applications` table for SC-02; S-06 adds its fields)
+  - [x] In-process runner in `src/runner/` per ADR 0006
+  - [x] Empty-state List on SC-02 (List's loading and error states come with S-11)
 - **Open questions:** none (resolved 2026-10-20: local only, SQLite, localhost only)
 
 #### S-01 — Pipeline spike (no UI)
@@ -239,7 +239,7 @@ A personal web app that runs locally on the owner's laptop (phone access later) 
 
 | Story | Screens | Epic | Status |
 |---|---|---|---|
-| S-00 | SC-02 | E0 | ☐ |
+| S-00 | SC-02 | E0 | In review |
 | S-01 | — | E0 | ☐ |
 | S-02 | SC-01 | E1 | Deferred |
 | S-03 | SC-06 | E1 | ☐ |

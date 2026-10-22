@@ -55,6 +55,10 @@ jobs:
         if: hashFiles('package.json') != ''
         run: npm test --if-present
 
+      - name: Install Playwright browser
+        if: hashFiles('playwright.config.ts') != ''
+        run: npx playwright install --with-deps chromium
+
       # End-to-end tests for critical paths, if the project defines them (e.g. Playwright)
       - name: End-to-end tests
         if: hashFiles('package.json') != ''

@@ -1,0 +1,7 @@
+/* Tailwind without its default theme: the only theme is the design system's,
+   so classes can only produce token values. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "../../design-system/tokens.css";
+@config "../../design-system/tailwind.config.js";
