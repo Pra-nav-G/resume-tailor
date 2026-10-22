@@ -12,6 +12,8 @@ dist/
 build/
 .next/
 next-env.d.ts
+# Written by `next dev` on every run
+AGENTS.md
 *.tsbuildinfo
 coverage/
 test-results/
