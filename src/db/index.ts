@@ -7,8 +7,8 @@ import * as schema from "./schema";
 
 export type Db = BetterSQLite3Database<typeof schema>;
 
-export function databasePath(env: { DATABASE_PATH?: string }): string {
-  return env.DATABASE_PATH || "data/resume-tailor.db";
+export function databasePath(configured: string | undefined): string {
+  return configured || "data/resume-tailor.db";
 }
 
 // Opens (creating if needed) the SQLite file and applies any pending migrations.
@@ -26,6 +26,6 @@ export function openDb(filePath: string): Db {
 const cache = globalThis as { db?: Db };
 
 export function getDb(): Db {
-  cache.db ??= openDb(databasePath(process.env));
+  cache.db ??= openDb(databasePath(process.env.DATABASE_PATH));
   return cache.db;
 }

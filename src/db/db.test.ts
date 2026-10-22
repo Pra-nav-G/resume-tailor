@@ -20,7 +20,7 @@ describe("database", () => {
 
   // AC1
   it("uses DATABASE_PATH when set, and data/resume-tailor.db otherwise", () => {
-    expect(databasePath({ DATABASE_PATH: "/tmp/x.db" })).toBe("/tmp/x.db");
-    expect(databasePath({})).toBe("data/resume-tailor.db");
+    expect(databasePath("/tmp/x.db")).toBe("/tmp/x.db");
+    expect(databasePath(undefined)).toBe("data/resume-tailor.db");
   });
 });
